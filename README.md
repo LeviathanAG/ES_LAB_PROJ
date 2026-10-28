@@ -11,6 +11,8 @@ Motion-activated smart corridor night lamp for the LPC1768 ES lab trainer. The p
 | `pir_debug.c` | Read the PIR signal and count transitions. |
 | `ld10_gpio_debug.c` | Blink LD10 as ordinary GPIO, without PWM or sensors. |
 | `ld10_pwm_debug.c` | Hold LD10 at 50% PWM, without sensors or thresholds. |
+| `cnd_gpio_debug.c` | Blink all eight GPIO signals on CND to check the header with an external LED. |
+| `cnd_p2_0_locator.c` | Blink only P2.0 to locate CND pin 7 without relying on a pin-1 mark. |
 | `sensor_override_debug.c` | Observe both sensors with an active-low switch on P2.12 to force the software dark condition. |
 | `sensor_keyboard_debug.c` | Observe both sensors with the trainer keypad to force the software dark condition. |
 
@@ -44,5 +46,11 @@ With power off, connect the 10-pin FRC cable **CNB → CNB1**. Flash `ld10_gpio_
 ```
 
 The drawing can be rotated to match your board; do not assume which physical corner is pin 1 without its mark.
+
+## Find P2.0 on an unmarked CND header
+
+Disconnect the PIR OUT wire, the LDR divider, and any CND ribbon cable before flashing either CND probe. The probes make CND signal pins outputs; they must not drive a sensor output. Connect one breadboard LED as **candidate CND pin → 1 kΩ resistor → LED anode (+) → LED cathode (−) → board GND**. Move its CND lead only while board power is off.
+
+Flash `cnd_gpio_debug.c` alone and try each CND contact. The eight signal contacts should blink the external LED. Pins 9 (not connected) and 10 (GND) are not GPIO outputs and must not be driven. Then flash `cnd_p2_0_locator.c` alone: only the contact that carries P2.0 will blink. That contact is the correct place for PIR OUT when the normal lamp program is restored. These probes test CND, not LD10; use the LD10 programs above for the on-board PWM LED.
 
 The ADC thresholds in the source are starting values. Run `ldr_debug.c`, measure `adc_raw` in normal room light and with the LDR covered, then adjust `DARK_THRESHOLD` and `BRIGHT_THRESHOLD` in the programs. With the divider above, a higher ADC reading means darker light.

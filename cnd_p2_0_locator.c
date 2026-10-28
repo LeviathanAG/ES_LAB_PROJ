@@ -1,4 +1,4 @@
-/* Blink only P2.0 so an external LED can identify CND pin 7. */
+/* Blink only P2.0 through CND -> CNA1 to check CND pin 7 on the board LEDs. */
 #include "LPC17xx.h"
 #include <stdint.h>
 

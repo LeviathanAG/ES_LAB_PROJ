@@ -1,4 +1,4 @@
-/* Blink every CND signal pin as GPIO; leave CND pins 9 and 10 untouched. */
+/* Blink the board LED bank through CND -> CNA1; leave pins 9 and 10 untouched. */
 #include "LPC17xx.h"
 #include <stdint.h>
 

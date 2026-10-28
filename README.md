@@ -11,8 +11,8 @@ Motion-activated smart corridor night lamp for the LPC1768 ES lab trainer. The p
 | `pir_debug.c` | Read the PIR signal and count transitions. |
 | `ld10_gpio_debug.c` | Blink LD10 as ordinary GPIO, without PWM or sensors. |
 | `ld10_pwm_debug.c` | Hold LD10 at 50% PWM, without sensors or thresholds. |
-| `cnd_gpio_debug.c` | Blink all eight GPIO signals on CND to check the header with an external LED. |
-| `cnd_p2_0_locator.c` | Blink only P2.0 to locate CND pin 7 without relying on a pin-1 mark. |
+| `cnd_gpio_debug.c` | Blink the board LED bank through the CND → CNA1 ribbon. |
+| `cnd_p2_0_locator.c` | Blink only the board LED driven by P2.0 through CND → CNA1. |
 | `sensor_override_debug.c` | Observe both sensors with an active-low switch on P2.12 to force the software dark condition. |
 | `sensor_keyboard_debug.c` | Observe both sensors with the trainer keypad to force the software dark condition. |
 
@@ -47,10 +47,12 @@ With power off, connect the 10-pin FRC cable **CNB → CNB1**. Flash `ld10_gpio_
 
 The drawing can be rotated to match your board; do not assume which physical corner is pin 1 without its mark.
 
-## Find P2.0 on an unmarked CND header
+## Check CND with the board LEDs
 
-Disconnect the PIR OUT wire, the LDR divider, and any CND ribbon cable before flashing either CND probe. The probes make CND signal pins outputs; they must not drive a sensor output. Connect one breadboard LED as **candidate CND pin → 1 kΩ resistor → LED anode (+) → LED cathode (−) → board GND**. Move its CND lead only while board power is off.
+Power off and disconnect PIR OUT and the LDR divider from CND. These probe programs drive the sensor pins as outputs. Connect a 10-pin FRC ribbon **CND → CNA1**. The board LED bank is connected to CNA1; the manual's LED exercise uses **CNA → CNA1**, and this diagnostic substitutes CND to check its eight GPIO signals. Align the ribbon's keyed ends with both headers.
 
-Flash `cnd_gpio_debug.c` alone and try each CND contact. The eight signal contacts should blink the external LED. Pins 9 (not connected) and 10 (GND) are not GPIO outputs and must not be driven. Then flash `cnd_p2_0_locator.c` alone: only the contact that carries P2.0 will blink. That contact is the correct place for PIR OUT when the normal lamp program is restored. These probes test CND, not LD10; use the LD10 programs above for the on-board PWM LED.
+Flash `cnd_gpio_debug.c` alone: the eight board LEDs connected to CNA1 should blink together. Then flash `cnd_p2_0_locator.c` alone: only the board LED reached through CND pin 7 (P2.0) should blink. The exact printed LD number depends on the CNA1 LED order; the lab manual does not specify that order. CND pin 9 is not connected and pin 10 is GND; neither is configured as an output by these programs. This checks the P2.0 route, but the blinking LED alone does not identify the physical pin-7 hole after removing the ribbon. Locate pin 1 using the connector's key or ribbon stripe and count down its side to pin 7, or check continuity with power off. Restore the PIR and LDR connections before running the lamp program.
+
+For the separate PWM lamp LED LD10, use **CNB → CNB1** and the LD10 programs above.
 
 The ADC thresholds in the source are starting values. Run `ldr_debug.c`, measure `adc_raw` in normal room light and with the LDR covered, then adjust `DARK_THRESHOLD` and `BRIGHT_THRESHOLD` in the programs. With the divider above, a higher ADC reading means darker light.

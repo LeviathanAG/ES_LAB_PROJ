@@ -11,6 +11,7 @@ Motion-activated smart corridor night lamp for the LPC1768 ES lab trainer. The p
 | `pir_debug.c` | Read the PIR signal and count transitions. |
 | `ld10_gpio_debug.c` | Blink LD10 as ordinary GPIO, without PWM or sensors. |
 | `ld10_pwm_debug.c` | Hold LD10 at 50% PWM, without sensors or thresholds. |
+| `ldr_pwm_pin_probe.c` | LDR-only probe: LD10 turns on when covering the LDR raises its ADC reading above the uncovered startup baseline. |
 | `either_sensor_pwm_debug.c` | Light LD10 at 80% PWM when the LDR is dark or PIR OUT is HIGH. |
 | `cnd_gpio_debug.c` | Blink the board LED bank through the CND → CNA1 ribbon. |
 | `cnd_p2_0_locator.c` | Blink only the board LED driven by P2.0 through CND → CNA1. |
@@ -59,5 +60,11 @@ For the separate PWM lamp LED LD10, use **CNB → CNB1** and the LD10 programs a
 ## Check either sensor with LD10
 
 With the LDR divider on **CND pin 1**, PIR OUT on **CND pin 7**, and the FRC cable **CNB → CNB1**, flash `either_sensor_pwm_debug.c` by itself. Cover the LDR or trigger the PIR: either input should light LD10 at 80% PWM. The LED turns off when the LDR is bright and PIR OUT is LOW. This probe skips the lamp program's 60-second software PIR warm-up, 10-second hold, and fade; the PIR module itself may still need time to settle after power-up. In Keil Watch, inspect `adc_raw`, `adc_error`, `ldr_dark`, `pir_high`, and `lamp_on` to see which path responded. For an LDR check, wait until `pir_high` is 0; for a PIR check, expose the LDR until `ldr_dark` is 0. The LDR always has an analog voltage, so the probe uses a provisional `DARK_THRESHOLD` of 2200; lower or raise it after checking the uncovered and covered `adc_raw` values. Do not move sensor wires while power is on. If LD10 never lights, check it first with `ld10_pwm_debug.c` to separate the LED/ribbon path from the sensors.
+
+## LDR-only pin probe
+
+Flash `ldr_pwm_pin_probe.c` alone with **CNB → CNB1** connected for LD10. It ignores the PIR completely. Leave the LDR uncovered when the board resets: the first 16 ADC readings become `baseline_adc`, and LD10 starts off. Cover the LDR; if `adc_raw` rises at least 400 counts above that baseline, LD10 turns on at 80% PWM. It switches off after the reading falls to within 200 counts of baseline. Watch `adc_raw`, `baseline_adc`, `adc_error`, `calibrated`, and `ldr_covered` in Keil. If the baseline was taken with the LDR covered, uncover it and reset the board.
+
+For a physical pin search, keep the divider's **3.3 V and GND fixed**. Power off before moving **only its ADC midpoint wire** to a candidate CND contact, then reset with the LDR uncovered and look for a repeatable `adc_raw` rise when covering it. A lit LED by itself is not proof of the correct contact; floating inputs can also change. The correct ADC contact is **CND pin 1 / P0.23**. Never move the supply wires between header contacts.
 
 The ADC thresholds in the source are starting values. Run `ldr_debug.c`, measure `adc_raw` in normal room light and with the LDR covered, then adjust `DARK_THRESHOLD` and `BRIGHT_THRESHOLD` in the programs. With the divider above, a higher ADC reading means darker light.

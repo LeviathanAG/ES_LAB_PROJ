@@ -11,6 +11,7 @@ Motion-activated smart corridor night lamp for the LPC1768 ES lab trainer. The p
 | `pir_debug.c` | Read the PIR signal and count transitions. |
 | `ld10_gpio_debug.c` | Blink LD10 as ordinary GPIO, without PWM or sensors. |
 | `ld10_pwm_debug.c` | Hold LD10 at 50% PWM, without sensors or thresholds. |
+| `either_sensor_pwm_debug.c` | Light LD10 at 80% PWM when the LDR is dark or PIR OUT is HIGH. |
 | `cnd_gpio_debug.c` | Blink the board LED bank through the CND → CNA1 ribbon. |
 | `cnd_p2_0_locator.c` | Blink only the board LED driven by P2.0 through CND → CNA1. |
 | `sensor_override_debug.c` | Observe both sensors with an active-low switch on P2.12 to force the software dark condition. |
@@ -54,5 +55,9 @@ Power off and disconnect PIR OUT and the LDR divider from CND. These probe progr
 Flash `cnd_gpio_debug.c` alone: the eight board LEDs connected to CNA1 should blink together. Then flash `cnd_p2_0_locator.c` alone: only the board LED reached through CND pin 7 (P2.0) should blink. The exact printed LD number depends on the CNA1 LED order; the lab manual does not specify that order. CND pin 9 is not connected and pin 10 is GND; neither is configured as an output by these programs. This checks the P2.0 route, but the blinking LED alone does not identify the physical pin-7 hole after removing the ribbon. Locate pin 1 using the connector's key or ribbon stripe and count down its side to pin 7, or check continuity with power off. Restore the PIR and LDR connections before running the lamp program.
 
 For the separate PWM lamp LED LD10, use **CNB → CNB1** and the LD10 programs above.
+
+## Check either sensor with LD10
+
+With the LDR divider on **CND pin 1**, PIR OUT on **CND pin 7**, and the FRC cable **CNB → CNB1**, flash `either_sensor_pwm_debug.c` by itself. Cover the LDR or trigger the PIR: either input should light LD10 at 80% PWM. The LED turns off when the LDR is bright and PIR OUT is LOW. This probe skips the lamp program's 60-second software PIR warm-up, 10-second hold, and fade; the PIR module itself may still need time to settle after power-up. In Keil Watch, inspect `adc_raw`, `adc_error`, `ldr_dark`, `pir_high`, and `lamp_on` to see which path responded. For an LDR check, wait until `pir_high` is 0; for a PIR check, expose the LDR until `ldr_dark` is 0. The LDR always has an analog voltage, so the probe uses a provisional `DARK_THRESHOLD` of 2200; lower or raise it after checking the uncovered and covered `adc_raw` values. Do not move sensor wires while power is on. If LD10 never lights, check it first with `ld10_pwm_debug.c` to separate the LED/ribbon path from the sensors.
 
 The ADC thresholds in the source are starting values. Run `ldr_debug.c`, measure `adc_raw` in normal room light and with the LDR covered, then adjust `DARK_THRESHOLD` and `BRIGHT_THRESHOLD` in the programs. With the divider above, a higher ADC reading means darker light.

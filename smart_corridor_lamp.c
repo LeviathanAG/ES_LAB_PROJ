@@ -91,18 +91,15 @@ static uint32_t pwm_period_ticks(void)
 {
     uint32_t ticks = SystemCoreClock / PWM_FREQUENCY_HZ;
 
-    /* Protect against an invalid/very low clock configuration. */
     return (ticks == 0u) ? 1u : ticks;
 }
 
 static void pwm_init(void)
 {
-    LPC_SC->PCONP |= (1u << 6);         /* Power PWM1. */
+    LPC_SC->PCONP |= (1u << 6);
 
-    /* PWM1 PCLK = CCLK. Preserve all other peripheral clock selections. */
     LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(3u << 12)) | (1u << 12);
 
-    /* P1.23 function 10 is PWM1.4. */
     LPC_PINCON->PINSEL3 = (LPC_PINCON->PINSEL3 & ~(3u << 14)) | (2u << 14);
 
     LPC_PWM1->TCR = 2u;                 /* Reset counter and prescale counter. */
